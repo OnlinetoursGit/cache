@@ -28,9 +28,15 @@ module Cache
       end
 
       def transform_value_object(*)
-        ::Hashie::Mash.new(super.merge(blank?: false, present?: true)) { |_, key| raise NoMethodError, "undefined method '#{key}' for cached data" }
+        ::Hashie::Mash.new(super) do |_, key|
+          raise NoMethodError, "undefined method '#{key}' for cached data"
+        end.tap do |h|
+          class << h
+            def blank?; false; end unless respond_to? :blank?
+            def present?; true; end unless respond_to? :present?
+          end
+        end
       end
-
     end
   end
 end
